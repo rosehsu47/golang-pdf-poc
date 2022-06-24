@@ -1,38 +1,51 @@
 package main
 
 import (
-	"strings"
-
 	log "github.com/sirupsen/logrus"
-
-	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 )
 
 func main() {
-	pdfGenerator, err := wkhtmltopdf.NewPDFGenerator()
+	pdfGenerator := DefaultPdfGenerator()
 
-	if err != nil {
-		log.Warn("NewPDFGenerator: ", err)
-	}
+	log.Println("Page1")
+	// html := `<html><div style="color: #f00;">憑證<h1>時間：2022/01/01</h1></div></html>`
+	html := `<!DOCTYPE html>
+	<html>
+		<head>
+			<meta charset="utf-8">
+			<title>合約</title>
+		</head>
+		<body>
+			<h1>這是同意書</h1>
+			<p>你好</p>
+		</body>
+	</html>`
+	// page := NewPage(html)
+	page := NewPageWithFooter(html)
+	pdfGenerator.AddPage(page)
+	CreateFile(pdfGenerator, "test123.pdf")
 
-	pdfGenerator.Dpi.Set(600)
-	pdfGenerator.NoCollate.Set(false)
-	pdfGenerator.PageSize.Set(wkhtmltopdf.PageSizeA4)
-	pdfGenerator.MarginBottom.Set(40)
+	// TryMerge
 
-	html := "<html>Hi</html>"
-	pdfGenerator.AddPage(wkhtmltopdf.NewPageReader(strings.NewReader(html)))
+	certificateInfo := `
+		<!DOCTYPE html>
+		<html>
+			<head>
+				<meta charset="utf-8" />
+				<title>憑證</title>
+			</head>
+			<body>
+				<h3>憑證</h3>
+				<p>序號：eq24u9r2uqw</p>
+				<p>時間：2022/01/01</p>
+			</body>
+		</html>
+	`
 
-	err = pdfGenerator.Create()
-	if err != nil {
-		log.Println("Create: ", err)
-	}
-
-	fileName := "test123.pdf"
-	err = pdfGenerator.WriteFile(fileName)
-	if err != nil {
-		log.Println("WriteFile: ", err)
-	}
+	pdfGenerator2 := DefaultPdfGenerator()
+	page = NewPageByMerge(html, certificateInfo)
+	pdfGenerator2.AddPage(page)
+	CreateFile(pdfGenerator2, "merged.pdf")
 
 	log.Println("Done")
 }
